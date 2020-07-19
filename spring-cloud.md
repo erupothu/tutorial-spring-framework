@@ -10,8 +10,7 @@
     <version>2.2.0.RELEASE</version>
 </dependency>
 ```
-
--App
+- App
 @EnableConfigServer
 
 -properties
@@ -27,6 +26,7 @@ spring.cloud.config.server.git.clone-on-start=true
     <artifactId>spring-cloud-starter-config</artifactId>
     <version>2.2.0.RELEASE</version>
 </dependency>
+```
 
 -properties
 server.port=8889
@@ -37,11 +37,14 @@ spring.cloud.config.uri=http://localhost:8888
 ## Spring Cloud Security (token-based security in Spring Boot applications  it makes OAuth2-based SSO easie)
 ## Server
 #### Dependency
+```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-oauth2</artifactId>
     <version>2.2.2.RELEASE</version>
 </dependency>
+```
+
 #### Application
 @EnableAuthorizationServer
 
@@ -50,11 +53,13 @@ server.port=7070
 
 ## Cleint
 #### Dependency
+```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-oauth2</artifactId>
     <version>2.2.2.RELEASE</version>
 </dependency>
+```
 
 #### Config
 @Configuration
@@ -86,6 +91,7 @@ security:
        
  ## Spring Cloud Stream is a framework built on top of Spring Boot and Spring Integration that helps in creating event-driven or message-driven microservices    
 #### Dependency
+```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
@@ -103,6 +109,7 @@ security:
     <groupId>org.springframework.kafka</groupId>
     <artifactId>spring-kafka</artifactId>
 </dependency>
+```
       
 
 
