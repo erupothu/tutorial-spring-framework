@@ -10,10 +10,11 @@
     <version>2.2.0.RELEASE</version>
 </dependency>
 ```
-- App
+- App \
 @EnableConfigServer
 
--properties
+- properties
+
 server.port=8888
 spring.cloud.config.server.git.uri=ssh://localhost/config-repo
 spring.cloud.config.server.git.clone-on-start=true
@@ -28,12 +29,13 @@ spring.cloud.config.server.git.clone-on-start=true
 </dependency>
 ```
 
--properties
+- properties
+```
 server.port=8889
 spring.application.name=config-client
 spring.profiles.active=development
 spring.cloud.config.uri=http://localhost:8888
-
+```
 ## Spring Cloud Security (token-based security in Spring Boot applications  it makes OAuth2-based SSO easie)
 ## Server
 #### Dependency
@@ -75,6 +77,7 @@ public class OAuthSecurityConfig extends WebSecurityConfigurerAdapter {
 }
 
 #### Properties:
+```yml
 security:
   oauth2:
     client:
@@ -88,7 +91,8 @@ security:
    servlet:
      session:
        cookie.name=KSESSION
-       
+```
+
  ## Spring Cloud Stream is a framework built on top of Spring Boot and Spring Integration that helps in creating event-driven or message-driven microservices    
 #### Dependency
 ```xml
