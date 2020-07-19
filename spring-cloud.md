@@ -64,6 +64,7 @@ server.port=7070
 ```
 
 #### Config
+```java
 @Configuration
 @EnableOAuth2Sso
 public class OAuthSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -75,6 +76,7 @@ public class OAuthSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticated();
     }
 }
+```
 
 #### Properties:
 ```yml
