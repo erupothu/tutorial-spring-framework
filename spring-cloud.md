@@ -2,7 +2,7 @@
 ## Spring Cloud Config (Spring's client/server approach for storing and serving distributed configurations across multiple applications and environments.)
 
 ##### Server
--Dependency
+- Dependency
 ```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -20,7 +20,8 @@ spring.cloud.config.server.git.uri=ssh://localhost/config-repo
 spring.cloud.config.server.git.clone-on-start=true
 
 ##### Client
---Dependency
+- Dependency
+```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-config</artifactId>
