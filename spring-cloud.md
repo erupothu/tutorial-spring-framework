@@ -436,7 +436,7 @@ spring:
 ```
 #### Producer and consumer call each other with RestTemplate with a contract.
 
-## Zuul Proxy (Zuul is a JVM based router and server side load balancer by Netflix)
+## Spring Zuul Proxy (Zuul is a JVM based router and server side load balancer by Netflix)
 - Dependency
 ``xml
 <dependency>
@@ -454,7 +454,513 @@ zuul:
       url: http://localhost:8081/spring-zuul-foos-resource/foos
 ```
 
+## Spring Cloud Bus (Spring Cloud Bus uses lightweight message broker to link distributed system nodes. The primary usage is to broadcast configuration changes or other management information)
+- Dependecy Client
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+    <version>2.2.1.RELEASE</version>
+</dependency>
+```
+- properties:
+```yml
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  cloud:
+    bus:
+      enabled: true
+      refresh:
+        enabled: true
+```
+- Dependency Server
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-config-monitor</artifactId>
+    <version>2.2.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+    <version>3.0.4.RELEASE</version>
+</dependency>
+```
+- properties
+```
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=guest
+spring.rabbitmq.password=guest
+```
+- in git properties
+```
+user.role=Programmer
+change
+user.role=Developer
+```
 
+## Spring Cloud Consul (Consul is a tool that provides components for resolving some of the most common challenges in a micro-services architecture like Service Discovery, Health Checking, Distributed Configuration, KV Store, Secure Service Communication, Multi Datacenter)
+- Install consul
+> curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+> sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+> sudo apt-get update && sudo apt-get install consul
+> consul
+http://localhost:8500/ui
+> consul agent -dev
+> consul members
+> curl localhost:8500/v1/catalog/nodes
+> dig @127.0.0.1 -p 8600 Judiths-MBP.node.consul
+> consul leave
+> mkdir ./consul.d
+> echo '{
+  "service": {
+    "name": "web",
+    "tags": [
+      "rails"
+    ],
+    "port": 80
+  }
+}' > ./consul.d/web.json
+> consul agent -dev -enable-script-checks -config-dir=./consul.d
+> dig @127.0.0.1 -p 8600 web.service.consul
+> curl http://localhost:8500/v1/catalog/service/web
+
+- dependency
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-consul-all</artifactId>
+    <version>1.3.0.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-consul-config</artifactId>
+    <version>1.3.0.RELEASE</version>
+</dependency>
+```
+- properties:
+```yml
+spring:
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        healthCheckPath: /my-health-check
+        healthCheckInterval: 20s
+      config:
+        enabled: true
+```
+
+## Cloud App Starter (provide bootstrapped and ready-to-go applications – that can serve as starting points for future development)
+> sudo docker run -p 50070:50070 sequenceiq/hadoop-docker:2.4.1
+> git clone https://github.com/spring-cloud-stream-app-starters/twitter.git
+> mvnw clean install -PgenerateApps
+> java -jar twitter_stream_source.jar --consumerKey=<CONSUMER_KEY> --consumerSecret=<CONSUMER_SECRET> --accessToken=<ACCESS_TOKEN> --accessTokenSecret=<ACCESS_TOKEN_SECRET>
+> git clone https://github.com/spring-cloud-stream-app-starters/hdfs.git
+> mvnw clean install -PgenerateApps
+> java -jar hdfs-sink.jar --fsUri=hdfs://127.0.0.1:50010/
+
+- dependency
+```xml
+<dependency>
+	<groupId>org.springframework.cloud.stream.app</groupId>
+	<artifactId>spring-cloud-starter-stream-source-twitterstream</artifactId>
+	<version>2.1.2.RELEASE</version>
+</dependency>
+<dependency>
+	<groupId>org.springframework.cloud.stream.app</groupId>
+	<artifactId>spring-cloud-starter-stream-sink-hdfs</artifactId>
+	<version>2.1.2.RELEASE</version>
+</dependency>
+```
+- Applciation along with SourceApp, ProcessorApp, SinkApp
+```java
+@SpringBootApplication
+public class AggregateApp {
+    public static void main(String[] args) {
+        new AggregateApplicationBuilder()
+          .from(SourceApp.class).args("--fixedDelay=5000")
+          .via(ProcessorApp.class)
+          .to(SinkApp.class).args("--debug=true")
+          .run(args);
+    }
+}
+```
+> java -jar twitterhdfs.jar
+
+## Spring Cloud – Bootstrapping (these apps is going to have a file called bootstrap.properties. It will contain properties just like application.properties but with a twist, A parent Spring ApplicationContext loads the bootstrap.properties first. This is critical so that Config Server can start managing the properties in application.properties)
+
+- bootstrap.properties
+```yml
+spring.cloud.config.name=discovery
+spring.cloud.config.uri=http://localhost:8081
+```
+- discovery.properties in our Git repository
+```yml
+spring.application.name=discovery
+server.port=8082
+ 
+eureka.instance.hostname=localhost
+ 
+eureka.client.serviceUrl.defaultZone=http://localhost:8082/eureka/
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+```
+- bootstrap.properties  for Gateway Zull
+```yml
+spring.cloud.config.name=gateway
+spring.cloud.config.discovery.service-id=config
+spring.cloud.config.discovery.enabled=true
+ 
+eureka.client.serviceUrl.defaultZone=http://localhost:8082/eureka/
+```
+- gateway.properties in our Git repository
+```
+spring.application.name=gateway
+server.port=8080
+ 
+eureka.client.region = default
+eureka.client.registryFetchIntervalSeconds = 5
+ 
+zuul.routes.book-service.path=/book-service/**
+zuul.routes.book-service.sensitive-headers=Set-Cookie,Authorization
+hystrix.command.book-service.execution.isolation.thread.timeoutInMilliseconds=600000
+ 
+zuul.routes.rating-service.path=/rating-service/**
+zuul.routes.rating-service.sensitive-headers=Set-Cookie,Authorization
+hystrix.command.rating-service.execution.isolation.thread.timeoutInMilliseconds=600000
+ 
+zuul.routes.discovery.path=/discovery/**
+zuul.routes.discovery.sensitive-headers=Set-Cookie,Authorization
+zuul.routes.discovery.url=http://localhost:8082
+hystrix.command.discovery.execution.isolation.thread.timeoutInMilliseconds=600000
+```
+- bootstrap.properties
+```
+spring.cloud.config.name=book-service
+spring.cloud.config.discovery.service-id=config
+spring.cloud.config.discovery.enabled=true
+ 
+eureka.client.serviceUrl.defaultZone=http://localhost:8082/eureka/
+```
+- book-service.properties in our Git repository
+```
+spring.application.name=book-service
+server.port=8083
+ 
+eureka.client.region = default
+eureka.client.registryFetchIntervalSeconds = 5
+eureka.client.serviceUrl.defaultZone=http://localhost:8082/eureka/
+```
+
+## Spring Cloud – Securing Services (Spring security)
+- dependency
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+- Application
+```java
+@EnableRedisHttpSession
+public class SessionConfig
+  extends AbstractHttpSessionApplicationInitializer {
+}
+```
+- eureka/gateway/book-service.properties files in our git repository
+```
+spring.redis.host=localhost 
+spring.redis.port=6379
+```
+- application.properties
+```
+eureka.client.serviceUrl.defaultZone=
+  http://discUser:discPassword@localhost:8082/eureka/
+security.user.name=configUser
+security.user.password=configPassword
+security.user.role=SYSTEM
+```
+- bootstrap.properties for config server with security
+```
+spring.cloud.config.username=configUser
+spring.cloud.config.password=configPassword
+eureka.client.serviceUrl.defaultZone=
+  http://discUser:discPassword@localhost:8082/eureka/
+  ```
+- bootstrap.properties for bookservice
+```
+spring.cloud.config.username=configUser
+spring.cloud.config.password=configPassword
+eureka.client.serviceUrl.defaultZone=
+  http://discUser:discPassword@localhost:8082/eureka/
+```
+- book-service.properties
+```
+management.security.sessions=never
+```
+
+## Spring Cloud Vault (for security sensitive information like database credentials, api gateway toke, api keys etc)
+- dependency
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-vault-config</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-vault-config-databases</artifactId>
+</dependency>
+```
+- bootstrap.yml
+```yml
+spring:
+  cloud:
+    vault:
+      uri: https://localhost:8200
+      ssl:
+        trust-store: classpath:/vault.jks
+        trust-store-password: changeit
+```
+OR
+- bootstrap.yml generic secret
+```yml
+spring:
+  cloud:
+    vault:
+      # other vault properties omitted ...
+      generic:
+        enabled: true
+        application-name: fakebank
+```
+- bootstrap.yml database secret
+```yml
+spring:
+  cloud:
+    vault:
+      # ... other properties omitted
+      database:
+        enabled: true
+        role: fakebank-accounts-rw
+```
+
+## Spring Cloud Data Flow ( cloud-native programming and operating model for composable data microservices, developers can create and orchestrate data pipelines for common use cases such as data ingest, real-time analytics, and data import/export.)
+- Source: is the application that consumes events
+- Processor: consumes data from the Source, does some processing on it, and emits the processed data to the next application in the pipeline
+- Sink: either consumes from a Source or Processor and writes the data to the desired persistence layer
+- Data Flow Shell - The Data Flow Shell is a client for the Data Flow Server
+- Message Broker
+-- Apache Kafka
+-- RabbitMQ
+
+- Local Data Flow Server
+- dependency
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-dataflow-server-local</artifactId>
+</dependency>
+```
+- Applciation
+```java
+@EnableDataFlowServer
+@SpringBootApplication
+public class SpringDataFlowServerApplication {
+ 
+    public static void main(String[] args) {
+        SpringApplication.run(
+          SpringDataFlowServerApplication.class, args);
+    }
+}
+```
+> mvn spring-boot:run
+
+- The Data Flow Shell
+-dependency
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-dataflow-shell</artifactId>
+</dependency>
+```
+- Application
+```java
+@EnableDataFlowShell
+@SpringBootApplication
+public class SpringDataFlowShellApplication {
+    
+    public static void main(String[] args) {
+        SpringApplication.run(SpringDataFlowShellApplication.class, args);
+    }
+}
+```
+> mvn spring-boot:run
+
+- create client service source, processing and sink
+
+- Register a Stream App
+maven://<groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
+
+```
+app register --name time-source --type source --uri maven://com.baeldung.spring.cloud:spring-data-flow-time-source:jar:0.0.1-SNAPSHOT
+app register --name time-processor --type processor --uri maven://com.baeldung.spring.cloud:spring-data-flow-time-processor:jar:0.0.1-SNAPSHOT
+app register --name logging-sink --type sink --uri maven://com.baeldung.spring.cloud:spring-data-flow-logging-sink:jar:0.0.1-SNAPSHOT
+```
+- Create and Deploy the Stream
+```
+stream create --name time-to-log 
+  --definition 'time-source | time-processor | logging-sink'
+```
+
+## ETL(extract, transform and load) with Spring Cloud Data Flow (Spring Cloud Data Flow is a cloud-native toolkit for building real-time data pipelines and batch processes. Spring Cloud Data Flow is ready to be used for a range of data processing use cases like simple import/export, ETL processing, event streaming, and predictive analytics)
+- create data pipelines in two flavors
+Long-lived real-time stream applications using Spring Cloud Stream
+Short-lived batched task applications using Spring Cloud Task
+
+> docker run --name dataflow-rabbit -p 15672:15672 -p 5672:5672 -d rabbitmq:3-management
+-  install and run the PostgreSQL RDBMS on the default port 5432
+> CREATE DATABASE dataflow;
+> java -Dloader.path=lib -jar spring-cloud-dataflow-server-local-1.6.3.RELEASE.jar \
+    --spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/dataflow \
+    --spring.datasource.username=postgres_username \
+    --spring.datasource.password=postgres_password \
+    --spring.datasource.driver-class-name=org.postgresql.Driver \
+    --spring.rabbitmq.host=127.0.0.1 \
+    --spring.rabbitmq.port=5672 \
+    --spring.rabbitmq.username=guest \
+    --spring.rabbitmq.password=gues
+
+http://localhost:9393/dashboard
+
+> java -jar spring-cloud-dataflow-shell-1.6.3.RELEASE.jar
+> dataflow config server http://{host}
+> dataflow:>app import --uri http://bit.ly/Darwin-SR1-stream-applications-rabbit-maven
+> dataflow:> app list
+- Composing an ETL Pipeline
+
+- Transform – Mapping JDBC fields to the MongoDB fields structure
+- dependency
+```xml
+dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+</dependency>
+```
+- processing App in Postgress
+```java
+@EnableBinding(Processor.class)
+public class CustomerProcessorConfiguration {
+ 
+    @Transformer(inputChannel = Processor.INPUT, outputChannel = Processor.OUTPUT)
+    public Customer convertToPojo(Customer payload) {
+ 
+        return payload;
+    }
+}
+```
+- Sink in MongoDB
+```java
+@Document(collection="customer")
+public class Customer {
+ 
+    private Long id;
+    private String name;
+ 
+    // Getters and Setters
+}
+@EnableBinding(Sink.class)
+public class CustomerListener {
+ 
+    @Autowired
+    private CustomerRepository repository;
+ 
+    @StreamListener(Sink.INPUT)
+    public void save(Customer customer) {
+        repository.save(customer);
+    }
+@Repository
+public interface CustomerRepository extends MongoRepository<Customer, Long> {
+ 
+}
+```
+- Stream Definition Register
+```
+app register --name customer-transform --type processor --uri maven://com.customer:customer-transform:0.0.1-SNAPSHOT
+app register --name customer-mongodb-sink --type sink --uri maven://com.customer:customer-mongodb-sink:jar:0.0.1-SNAPSHOT
+```
+
+## Batch Processing with Spring Cloud Data Flow (a batch process makes it easy to create short-lived services where tasks are executed on demand.)
+- dependency
+```xml
+dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-batch</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+</dependency>
+```
+- Application
+```java
+@EnableTask
+@EnableBatchProcessing
+@SpringBootApplication
+public class BatchJobApplication {
+ 
+    public static void main(String[] args) {
+        SpringApplication.run(BatchJobApplication.class, args);
+    }
+}
+
+@Configuration
+public class JobConfiguration {
+ 
+    private static Log logger
+      = LogFactory.getLog(JobConfiguration.class);
+ 
+    @Autowired
+    public JobBuilderFactory jobBuilderFactory;
+ 
+    @Autowired
+    public StepBuilderFactory stepBuilderFactory;
+ 
+    @Bean
+    public Job job() {
+        return jobBuilderFactory.get("job")
+          .start(stepBuilderFactory.get("jobStep1")
+          .tasklet(new Tasklet() {
+            
+              @Override
+              public RepeatStatus execute(StepContribution contribution, 
+                ChunkContext chunkContext) throws Exception {
+                
+                logger.info("Job was run");
+                return RepeatStatus.FINISHED;
+              }
+        }).build()).build();
+    }
+}
+```
+> mvn clean install
+- Register
+> app register --name batch-job --type task --uri maven://com.baeldung.spring.cloud:batch-job:jar:0.0.1-SNAPSHOT
+> task create myjob --definition batch-job
+> task launch myjob
+> task execution list
 
 
 
